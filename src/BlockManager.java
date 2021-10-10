@@ -3,18 +3,18 @@ import java.util.ArrayList;
 public class BlockManager {
     ArrayList<Block> blocks = new ArrayList<>();
 
-    Block getBlock(int index) {
+    public Block getBlock(int index) {
         return blocks.get(index);
     }
 
-    Block newBlock(byte[] b) {
-        Block block = new Block(this, blocks.size(), 0);
+    public Block newBlock(byte[] b) {
+        Block block = new Block(this, blocks.size(), b, b.length);
         blocks.add(block);
         return block;
     }
 
-    Block newEmptyBlock(int blockSize) {
-        Block block = new Block(this, blocks.size(), 0);
+    public Block newEmptyBlock(int blockSize) {
+        Block block = new Block(this, blocks.size(), new byte[blockSize], blockSize);
         blocks.add(block);
         return block;
     }

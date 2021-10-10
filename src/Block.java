@@ -3,9 +3,12 @@ public class Block {
     private final int size;
     private final int index;
 
-    Block(BlockManager bm, int index, int size) {
+    private final byte[] data;
+
+    Block(BlockManager bm, int index, byte[] data, int size) {
         this.bm = bm;
         this.index = index;
+        this.data = data;
         this.size = size;
     }
 
@@ -20,7 +23,7 @@ public class Block {
 
 
     byte[] read() {
-        return null;
+        return data;
     }
 
 
