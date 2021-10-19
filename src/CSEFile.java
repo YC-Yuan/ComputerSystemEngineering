@@ -1,15 +1,28 @@
-public class File {
-    static final int MOVE_CURR = 0; //只是光标的三个枚举值，具体数值⽆实际意义
+import java.util.ArrayList;
+
+public class CSEFile {
+    static final int MOVE_CURR = 0; //只是光标的三个枚举值，具体数值无实际意义
     static final int MOVE_HEAD = 1;
     static final int MOVE_TAIL = 2;
 
     private int size = 0;
     private final int id;
     private final FileManager fm;
+    public final String name;
+    public ArrayList<Integer> blockIndexes = new ArrayList<>();
 
-    File(FileManager fm, int fileId) {
+    CSEFile(FileManager fm, String filename, int fileId) {
         this.fm = fm;
         id = fileId;
+        name = filename;
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append("\n");
+        sb.append(id).append("\n");
+        sb.append(blockIndexes.toString()).append("\n");
+        return sb.toString();
     }
 
     int getFileId() {

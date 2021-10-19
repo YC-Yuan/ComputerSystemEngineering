@@ -1,6 +1,15 @@
 import java.util.ArrayList;
 
 public class BlockManager {
+    static int index_count = 0;
+    int index = 0;
+
+    public BlockManager() {
+        index = index_count++;
+        // 自动添加到管理池
+        BlockPool.addBlockManager(this);
+    }
+
     ArrayList<Block> blocks = new ArrayList<>();
 
     public Block getBlock(int index) {

@@ -1,8 +1,8 @@
+// 存储block meta信息, 总是根据meta中的路径寻找block data
 public class Block {
     private final BlockManager bm;
     private final int size;
     private final int index;
-
     private final byte[] data;
 
     Block(BlockManager bm, int index, byte[] data, int size) {

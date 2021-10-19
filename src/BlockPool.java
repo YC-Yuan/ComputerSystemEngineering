@@ -5,21 +5,25 @@ public class BlockPool {
     private final int DUPLICATION_NUM = 3;
 
     // 统一管理所有BM,作为File层与Block层之间的接口,将block提供给file使用
-    private static final ArrayList<BlockManager> bms = new ArrayList<>();
+    private static final HashMap<Integer, BlockManager> bms = new HashMap<>();
     // String表示为"int int",含义是bm编号-bm中的blockIndex
     private static final HashMap<Integer, ArrayList<String>> blockIndexes = new HashMap<>();
 
     public static void addBlockManager(BlockManager bm) {
-        bms.add(bm);
+        if (bms.containsKey(bm.index)) {
+            // TODO 报错,重复添加了BM(不应该出现,但不排除怪事发生)
+        } else {
+            bms.put(bm.index, bm);
+        }
     }
 
+    // 根据逻辑block index获取一个物理block
     Block getBlock(int index) {
+        // 逻辑block是否存在
         if (blockIndexes.containsKey(index)) {
             // 存在此block
             ArrayList<String> realBlocks = blockIndexes.get(index);
             // 以随机顺序尝试访问,直到找到完好的block
-
-            // 从逻辑block任取一个物理block的信息
             String blockInfo = realBlocks.get((int) (Math.random() * realBlocks.size()));
             String[] infos = blockInfo.split(" ");
             int bmIndex = Integer.parseInt(infos[0]);
