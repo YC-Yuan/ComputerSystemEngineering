@@ -2,18 +2,24 @@
 public class Block {
     private final BlockManager bm;
     private final int size;
-    private final int index;
+    private final int id;
     private final byte[] data;
 
-    Block(BlockManager bm, int index, byte[] data, int size) {
+    Block(BlockManager bm,int id,byte[] data,int size) {
         this.bm = bm;
-        this.index = index;
+        this.id = id;
         this.data = data;
         this.size = size;
     }
 
-    int getIndex() {
-        return index;
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        return sb.toString();
+    }
+
+    int getId() {
+        return id;
     }
 
 

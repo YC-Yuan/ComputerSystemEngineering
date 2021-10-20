@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.List;
 
 public class CSEFile {
     static final int MOVE_CURR = 0; //只是光标的三个枚举值，具体数值无实际意义
@@ -9,25 +10,37 @@ public class CSEFile {
     private final int id;
     private final FileManager fm;
     public final String name;
-    public ArrayList<Integer> blockIndexes = new ArrayList<>();
+    public List<Integer> blockIndexes = new ArrayList<>();
 
-    CSEFile(FileManager fm, String filename, int fileId) {
+    CSEFile(FileManager fm,String filename,int fileId) {
         this.fm = fm;
         id = fileId;
         name = filename;
+    }
+
+    CSEFile(FileManager fm,String filename,int fileId,List<Integer> blockIndexes) {
+        this.fm = fm;
+        id = fileId;
+        name = filename;
+        this.blockIndexes = blockIndexes;
     }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(name).append("\n");
         sb.append(id).append("\n");
-        sb.append(blockIndexes.toString()).append("\n");
+        for (int i : blockIndexes) {
+            sb.append(i).append(" ");
+        }
+        sb.append("\n");
         return sb.toString();
     }
 
     int getFileId() {
         return id;
     }
+
+    String getFileName() {return name;}
 
     FileManager getFileManager() {
         return fm;
@@ -42,10 +55,10 @@ public class CSEFile {
     }
 
     int pos() {
-        return move(0, MOVE_CURR);
+        return move(0,MOVE_CURR);
     }
 
-    int move(int offset, int where) {
+    int move(int offset,int where) {
         return 0;
     }
 
@@ -56,7 +69,8 @@ public class CSEFile {
     void setSize(int newSize) {
         if (newSize > size) {
             // TODO: 扩充空间并用0填满
-        } else {
+        }
+        else {
             // TODO: 删减空间并将被删除部分用0填满
         }
     }
