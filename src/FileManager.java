@@ -12,10 +12,10 @@ public class FileManager {
     private final int id;
 
     // 所有File manager公用的file池，在系统内部以int做index，对用户不可见
-    static int countFile = 0;// TODO 持久化复原时也需要复原
-    static HashMap<Integer,CSEFile> files = new HashMap<>();
+    static int countFile = 0;
+    static Map<Integer,CSEFile> files = new HashMap<>();
     // 每个FM独立的命名空间
-    HashMap<String,CSEFile> fileNames = new HashMap<>();
+    Map<String,CSEFile> fileNames = new HashMap<>();
 
     public FileManager() {
         id = countFM++;

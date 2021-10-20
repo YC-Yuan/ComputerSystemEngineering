@@ -4,7 +4,8 @@ import java.util.Map;
 
 public class BlockManager {
     // BMs公用
-    static Map<Integer,BlockManager> bms = new HashMap<>();
+    private static final int DUPLICATION_NUM = 3;
+    static Map<Integer, BlockManager> bms = new HashMap<>();
 
     // BM自身信息
     static int countBM = 0;
@@ -13,6 +14,12 @@ public class BlockManager {
     private final int id;
 
     // 所有BM公用的逻辑block池
+    static int countLogicBlock = 0;
+    static Map<Integer, Block> logicBlocks = new HashMap<>();
+
+    // BM独立的物理blocks索引
+    int countBlock = 0;
+    Map<Integer, Block> blocks = new HashMap<>();
 
     public BlockManager() {
         id = countBM++;
@@ -31,21 +38,22 @@ public class BlockManager {
 
     }
 
-    ArrayList<Block> blocks = new ArrayList<>();
 
     public Block getBlock(int index) {
         return blocks.get(index);
     }
 
     public Block newBlock(byte[] b) {
-        Block block = new Block(this,blocks.size(),b,b.length);
-        blocks.add(block);
+        int blockId = countBlock++;
+        Block block = new Block(this, blockId, b, b.length);
+        blocks.put(blockId, block);
         return block;
     }
 
     public Block newEmptyBlock(int blockSize) {
-        Block block = new Block(this,blocks.size(),new byte[blockSize],blockSize);
-        blocks.add(block);
+        int blockId = countBlock++;
+        Block block = new Block(this, blockId, new byte[blockSize], blockSize);
+        blocks.put(blockId, block);
         return block;
     }
 
