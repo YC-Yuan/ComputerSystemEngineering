@@ -1,37 +1,179 @@
 import java.io.*;
 import java.util.*;
 
+import static java.lang.System.exit;
+
 public class BlockManager {
     // BMs公用
+    public static final int MAX_SIZE = 512;
     private static final int DUPLICATION_NUM = 3;
-    static Map<Integer,BlockManager> bms = new HashMap<>();
+    static Map<Integer, BlockManager> bms = new HashMap<>();
 
     // BM自身信息
     static int countBM = 0;
     private static final String rootPath = "./BMs/";
-    private final String savePath;
     private static final String mapRootPath = "./Maps/";
     private static final String logicBlockMapPath = "./Maps/logicBlockMap.txt";
     private final int id;
 
+    public int getId() {
+        return id;
+    }
+
     // 所有BM公用的逻辑block池
     static int countLogicBlock = 0;
     // String格式为"int-int",即BM编号中的Block编号
-    static Map<Integer,List<String>> logicBlocks = new HashMap<>();
+    static Map<Integer, List<String>> logicBlocks = new HashMap<>();
 
     // BM独立的物理blocks索引
     int countBlock = 0;
-    Map<Integer,Block> blocks = new HashMap<>();
+    Map<Integer, Block> blocks = new HashMap<>();
 
     public BlockManager() {
         id = countBM++;
-        savePath = rootPath + id + "/";
-        // 自动添加到管理池
-        bms.put(id,this);
+        bms.put(id, this);
+    }
+
+    private BlockManager(int id) {
+        this.id = id;
+        countBM = Math.max(countBM, id);
+        bms.put(id, this);
+    }
+
+    // 运行途中重新载入,需要重置数据
+    private static void init() {
+        bms = new HashMap<>();
+        countBM = 0;
+        countLogicBlock = 0;
+        logicBlocks = new HashMap<>();
     }
 
     // 用于存储meta的信息
     public static void saveAll() {
+        saveLogicBlockMap();
+        for (BlockManager bm : bms.values()) {
+            bm.save();
+        }
+    }
+
+    // 持久化：从目录结构读取block的meta信息，进行数据检测后恢复Block对象
+    public static Map<Integer, BlockManager> startAll() {
+        init();
+        loadLogicBlockMap();
+        loadLogicBlocks();
+        return bms;
+    }
+
+    // FM向logic block申请读取
+    public static Block getLogicBlock(int index) {
+        if (!logicBlocks.containsKey(index)) {
+            throw new ErrorCode(ErrorCode.LOGIC_BLOCK_NOT_FOUND);
+        }
+        // list中存储了多个物理块信息
+        List<String> sl = logicBlocks.get(index);
+        // 以随机顺序访问直到找到合适块
+        Collections.shuffle(sl);
+        for (String str : sl) {
+            String[] split = str.split("-");
+            int bmId = Integer.parseInt(split[0]);
+            int blockId = Integer.parseInt(split[1]);
+            BlockManager bm = bms.get(bmId);
+            return bm.getBlock(blockId);
+        }
+        throw new ErrorCode(ErrorCode.EMPTY_LOGIC_BLOCK);
+    }
+
+    // 申请logic block自动备份
+    public static Block newLogicBlock(byte[] b) {
+        // 找备份数量个BM,新建块并添加索引
+        int logicBlockId = countLogicBlock++;
+        List<String> blockInfos = new ArrayList<>();
+        // 打乱后访问前几个BM
+        Collection<BlockManager> bmc = bms.values();
+        if (bmc.size() <= 0) {
+            throw new ErrorCode(ErrorCode.NO_BLOCK_MANAGER_AVAILABLE);
+        }
+        List<BlockManager> bml = new ArrayList<>(bmc);
+        Collections.shuffle(bml);
+        Block block = null;
+        int duplicateNum = Math.min(DUPLICATION_NUM, bml.size());
+        for (int i = 0; i < duplicateNum; i++) {
+            BlockManager bm = bml.get(i);
+            block = bm.newBlock(logicBlockId, b);
+            String blockInfo = bm.getId() + "-" + block.getId();
+            // 维护logic block层信息
+            blockInfos.add(blockInfo);
+        }
+        logicBlocks.put(logicBlockId, blockInfos);
+        return block;
+    }
+
+    public static Block newEmptyLogicBlock(int blockSize) {
+        return newLogicBlock(new byte[blockSize]);
+    }
+
+    private Block getBlock(int id) {
+        if (!blocks.containsKey(id)) {
+            throw new ErrorCode(ErrorCode.BLOCK_NOT_FOUND);
+        }
+        return blocks.get(id);
+    }
+
+    // 维护BM内部的block索引
+    private Block newBlock(int logicBlockId, byte[] b) {
+        int blockId = countBlock++;
+        Block block = new Block(this, blockId, logicBlockId, b, b.length);
+        blocks.put(blockId, block);
+        return block;
+    }
+
+    private Block newEmptyBlock(int logicBlockId, int blockSize) {
+        return newBlock(logicBlockId, new byte[blockSize]);
+    }
+
+    // 工具函数 从文件结构中读取block, 需要在载入BM和
+    private static Block loadBlock(int bmId, int blockId) {
+        BlockManager bm = bms.get(bmId);
+        File meta = new File(getBmBlockMeta(bmId, blockId));
+        File data = new File(getBmBlockData(bmId, blockId));
+        try {
+            if (!meta.exists()) {
+                throw new ErrorCode(ErrorCode.BLOCK_META_NOT_FOUND);
+            }
+            if (!data.exists()) {
+                throw new ErrorCode(ErrorCode.BLOCK_DATA_NOT_FOUND);
+            }
+        } catch (ErrorCode e) {
+            System.out.println(e.getErrorText());
+            return null;
+        }
+        try {
+            Scanner sc = new Scanner(meta);
+            sc.nextInt();// 跳过blockId
+            int lbId = sc.nextInt();
+            int size = sc.nextInt();
+            sc.nextLine();
+            String md5 = sc.nextLine();
+            byte[] byteData = Util.toByteArray(data);
+            // 检验md5
+            String dataMd5 = Util.toMd5(byteData);
+            if (md5.equals(dataMd5)) {// block完好!
+                return new Block(bm, blockId, lbId, byteData, byteData.length);
+            } else {// TODO block损坏!需要修复
+                return null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void indexBlock(Block block) {
+        countBlock = Math.max(countBlock, block.getId());
+        blocks.put(block.getId(), block);
+    }
+
+    private static void saveLogicBlockMap() {
         // 持久化logic对应关系信息
         File dir = new File(mapRootPath);
         if (!dir.exists()) {
@@ -44,7 +186,7 @@ public class BlockManager {
             // 第一个数字：logicBlock个数
             sb.append(logicBlocks.size()).append("\n");
             // 每两行一组：第一行为id和备份数量 第二行为多个int int编号
-            for (Map.Entry<Integer,List<String>> lb : logicBlocks.entrySet()) {
+            for (Map.Entry<Integer, List<String>> lb : logicBlocks.entrySet()) {
                 sb.append(lb.getKey()).append(" ").append(lb.getValue().size()).append("\n");
                 List<String> list = lb.getValue();
                 for (String s : list) {
@@ -60,22 +202,15 @@ public class BlockManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        for (BlockManager bm : bms.values()) {
-            bm.save();
-        }
     }
 
-    // 持久化，创建目录结构并把block存成meta和data
-    public void save() {
-        // 目录结构
-        File dir = new File(savePath);
-        if (!dir.exists()) {
-            boolean mkdir = dir.mkdirs();
-        }
+    // 单BM持久化，创建目录结构并把block存成meta和data
+    private void save() {
+        createDirs();// 创建目录结构
         // 对Block诸个创建.meta和.data
         for (Block b : blocks.values()) {
-            String metaPath = savePath + b.getId() + ".meta";
-            String dataPath = savePath + b.getId() + ".data";
+            String metaPath = getBlockMetaPath(b.getId());
+            String dataPath = getBlockDataPath(b.getId());
             try {
                 FileWriter fw;
                 fw = new FileWriter(metaPath);
@@ -90,8 +225,23 @@ public class BlockManager {
         }
     }
 
-    // 持久化：从目录结构读取block的meta信息，进行数据检测后恢复Block对象
-    public static Map<Integer,BlockManager> startAll() {
+    private void createDirs() {
+        // 目录结构
+        File dir = new File(getBmPath());
+        File metaDir = new File(getBlockMetaDir());
+        File dataDir = new File(getBlockDataDir());
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        if (!metaDir.exists()) {
+            metaDir.mkdirs();
+        }
+        if (!dataDir.exists()) {
+            dataDir.mkdirs();
+        }
+    }
+
+    private static void loadLogicBlockMap() {
         File lbInfo = new File(logicBlockMapPath);
         if (lbInfo.exists()) {
             // 需要先恢复LogicBlock信息
@@ -105,90 +255,94 @@ public class BlockManager {
                     // 解析第一行：逻辑block编号与备份数量
                     int lbId = sc.nextInt();
                     int pbNum = sc.nextInt();
-                    countLogicBlock = Math.max(countLogicBlock,lbId);
+                    countLogicBlock = Math.max(countLogicBlock, lbId);
                     List<String> blockInfos = new ArrayList<>();
                     for (int i1 = 0; i1 < pbNum; i1++) {
-                        // 对每个备份：记录备份位置信息
+                        // 解析第二行:对每个备份,记录备份位置信息
                         blockInfos.add(sc.nextInt() + "-" + sc.nextInt());
                     }
-
-
+                    logicBlocks.put(lbId, blockInfos);// 重新载入
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
         }
-        File file = new File(rootPath);
-        File[] fl = file.listFiles();
-        if (fl == null) {
-            throw new ErrorCode(ErrorCode.START_LACK_BM);
+    }
+
+    private static void loadLogicBlocks() {
+        // 按照logicBlockMap中记载信息逐个读取 并修复
+        for (Map.Entry<Integer, List<String>> entry : logicBlocks.entrySet()) {
+            // 对某个logic block
+            int lbId = entry.getKey();
+            List<String> pbInfos = entry.getValue();
+            // 为损坏修复准备的一些变量
+            boolean breakdown = false;
+            boolean canRecover = false;
+            Block coverBlock = null;
+            Stack<String> breakInfos = new Stack<>();
+            // 第一遍:载入完好block,记录损坏block
+            for (String info : pbInfos) {
+                String[] split = info.split("-");
+                int bmId = Integer.parseInt(split[0]);
+                int blockId = Integer.parseInt(split[1]);
+                // 保证BM载入
+                if (!bms.containsKey(bmId)) {
+                    bms.put(bmId, new BlockManager(bmId));
+                }
+                BlockManager bm = bms.get(bmId);// 由于重新载入,此处一定能找到bm
+                Block block = loadBlock(bmId, blockId);
+                if (block == null) {
+                    breakdown = true;
+                    breakInfos.add(info);
+                } else {
+                    coverBlock = block;
+                    bm.indexBlock(block);
+                }
+            }
+            // 第二遍:修复损坏block
+            if (breakdown) {
+                if (coverBlock == null) {
+                    // 损坏发生且备份不足以修复
+                    throw new ErrorCode(ErrorCode.CANNOT_RECOVER_BLOCK);
+                } else {// 执行修复,用完好block数据填充损坏block
+                    for (String info1 : breakInfos) {
+                        String[] split = info1.split("-");
+                        int bmId = Integer.parseInt(split[0]);
+                        int blockId = Integer.parseInt(split[1]);
+                        BlockManager bm = bms.get(bmId);// 由于重新载入,此处一定能找到bm
+                        Block block = new Block(bm, blockId, lbId, coverBlock.read(), coverBlock.getSize());
+                        bm.indexBlock(block);
+                    }
+                }
+            }
         }
-        // 每个文件夹对应一个BM
-        for (File f : fl) {
-
-
-        }
-        return null;
     }
 
-    // FM向logic block申请读取
-    public static Block getLogicBlock(int index) {
-        if (!logicBlocks.containsKey(index)) {
-            // TODO logic block不存在
-            throw new ErrorCode(1);
-        }
-        // list中存储了多个物理块信息
-        List<String> sl = logicBlocks.get(index);
-        // 以随机顺序访问直到找到合适块
-        Collections.shuffle(sl);
-        for (String str : sl) {
-            String[] split = str.split("-");
-            int bmId = Integer.parseInt(split[0]);
-            int blockId = Integer.parseInt(split[1]);
-            // 访问对应Block 查看数据是否完好
-
-        }
-        return null;
+    private static String getBmBlockMeta(int bmId, int blId) {
+        return rootPath + bmId + "/meta/" + blId + ".meta";
     }
 
-    private Block getBlock(int id) {
-        if (!blocks.containsKey(id)) {
-            // TODO BM没存储对应block
-            throw new ErrorCode(1);
-        }
-        return blocks.get(id);
+    private static String getBmBlockData(int bmId, int blId) {
+        return rootPath + bmId + "/data/" + blId + ".data";
     }
 
-    public Block newLogicBlock(byte[] b) {
-        int logicBlockId = countLogicBlock++;
-        List<String> blockInfos = new ArrayList<>();
-        Block block = newBlock(b);
-        String blockInfo = id + "-" + block.getId();
-        blockInfos.add(blockInfo);
-        logicBlocks.put(logicBlockId,blockInfos);
-        return null;
+    private String getBmPath() {// BM所属文件夹
+        return rootPath + id + "/";
     }
 
-    public static Block newEmptyLogicBlock() {
-        return null;
+    private String getBlockMetaDir() {// BM存meta的文件夹
+        return getBmPath() + "meta/";
     }
 
-    private Block newBlock(byte[] b) {
-        int blockId = countBlock++;
-        Block block = new Block(this,blockId,b,b.length);
-        blocks.put(blockId,block);
-        return block;
+    private String getBlockMetaPath(int blockId) {// BM的meta文件地址
+        return getBlockMetaDir() + blockId + ".meta";
     }
 
-    private Block newEmptyBlock(int blockSize) {
-        int blockId = countBlock++;
-        Block block = new Block(this,blockId,new byte[blockSize],blockSize);
-        blocks.put(blockId,block);
-        return block;
+    private String getBlockDataDir() {
+        return getBmPath() + "data/";
     }
 
-
-    public int getId() {
-        return id;
+    private String getBlockDataPath(int blockId) {
+        return getBlockDataDir() + blockId + ".data";
     }
 }
