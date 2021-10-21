@@ -48,8 +48,8 @@ public class FileManager {
         // 对File逐个创建.meta, 重启时读取
         for (CSEFile f : fileNames.values()) {
             String fPath = savePath + f.name + ".meta";
-            FileWriter fw;
             try {
+                FileWriter fw;
                 fw = new FileWriter(fPath);
                 fw.write(f.toString());
                 fw.close();
@@ -75,8 +75,8 @@ public class FileManager {
             File[] fileMetas = f.listFiles();
             assert fileMetas != null;
             for (File meta : fileMetas) {
-                Scanner sc;
                 try {
+                    Scanner sc;
                     sc = new Scanner(new FileReader(meta));
                     String filename = sc.nextLine();
                     int fileId = sc.nextInt();
@@ -87,6 +87,7 @@ public class FileManager {
                     // 创建文件对象 添加索引
                     countFile = Math.max(countFile,fileId);
                     fm.loadFile(new CSEFile(fm,filename,fileId,lbIndexes));
+                    sc.close();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }

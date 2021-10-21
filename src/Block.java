@@ -9,12 +9,13 @@ public class Block {
     private final int id;
     private final byte[] data;
 
-    Block(BlockManager bm, int id, byte[] data, int size) {
+    Block(BlockManager bm,int id,byte[] data,int size) {
         this.bm = bm;
         this.id = id;
         this.data = data;
         this.size = size;
     }
+
 
     // block meta信息: id+size+block数据md5
     public String toString() {
@@ -25,7 +26,7 @@ public class Block {
         try {
             MessageDigest md5 = MessageDigest.getInstance("md5");
             md5.update(data);
-            dataMd5Code = new BigInteger(1, md5.digest()).toString(16);
+            dataMd5Code = new BigInteger(1,md5.digest()).toString(16);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
