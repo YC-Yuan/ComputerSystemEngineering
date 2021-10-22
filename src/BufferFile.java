@@ -5,10 +5,13 @@ import java.util.List;
 
 public class BufferFile extends CSEFile {
     private List<Byte> data = new ArrayList<>();
+    private CSEFile of;
 
     BufferFile(CSEFile file) {
         super(file.getFileManager(), file.getFileName(), file.getFileId(), file.getLogicBlocks());
-        byte[] bytes = readAll();
+        of = file;
+        cursor = file.cursor;
+        byte[] bytes = file.readAll();
         for (Byte b : bytes) {
             data.add(b);
         }
@@ -43,10 +46,10 @@ public class BufferFile extends CSEFile {
 
     public void close() {
         // 将buffer中的所有东西写回
-        move(0, CSEFile.MOVE_HEAD);
-        boolean writeFlag = super.write(getByteData());
+        of.move(0, CSEFile.MOVE_HEAD);
+        boolean writeFlag = of.write(getByteData());
         if (writeFlag) {
-            super.setSize(data.size());
+            of.setSize(data.size());
         }
     }
 

@@ -44,7 +44,6 @@ public class FileManager {
             try {
                 throw new ErrorCode(ErrorCode.FILE_NOT_FOUND);
             } catch (ErrorCode e) {
-                e.printStackTrace();
                 System.out.println(e.getErrorText());
                 return null;
             }
@@ -94,7 +93,6 @@ public class FileManager {
             try {
                 throw new ErrorCode(ErrorCode.FILE_NOT_FOUND);
             } catch (ErrorCode e) {
-                e.printStackTrace();
                 System.out.println(e.getErrorText());
                 return null;
             }
@@ -107,7 +105,6 @@ public class FileManager {
             try {
                 throw new ErrorCode(ErrorCode.FILE_NAME_REPEATED);
             } catch (ErrorCode e) {
-                e.printStackTrace();
                 System.out.println(e.getErrorText());
                 return null;
             }
@@ -118,7 +115,6 @@ public class FileManager {
             try {
                 throw new ErrorCode(ErrorCode.FILE_ID_REPEATED);
             } catch (ErrorCode e) {
-                e.printStackTrace();
                 System.out.println(e.getErrorText());
                 countFile--;// 复原参数
                 return null;

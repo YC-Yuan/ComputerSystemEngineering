@@ -72,7 +72,9 @@ public class CSEFile {
         this.blockIndexes = new ArrayList<>(blockIndexes);
         for (Integer index : blockIndexes) {
             Block lb = BlockManager.getLogicBlock(index);
-            blockSizes.add(lb.getSize());
+            if (lb != null) {
+                blockSizes.add(lb.getSize());
+            }
         }
     }
 
@@ -104,7 +106,6 @@ public class CSEFile {
                 throw new ErrorCode(ErrorCode.CURSOR_GREATER_THAN_SIZE);
             }
         } catch (ErrorCode e) {
-            e.printStackTrace();
             System.out.println(e.getErrorText());
             target = Math.max(target, 0);
             target = Math.min(target, size);
@@ -121,7 +122,6 @@ public class CSEFile {
                 throw new ErrorCode(ErrorCode.CURSOR_GREATER_THAN_SIZE);
             }
         } catch (ErrorCode e) {
-            e.printStackTrace();
             System.out.println(e.getErrorText());
             length = size - cursor;// 改读余量
         }
@@ -160,7 +160,6 @@ public class CSEFile {
                 successFlag = writeNewBlocks(newB, curBlock);
             }
         } catch (ErrorCode e) {
-            e.printStackTrace();
             System.out.println(e.getErrorText());
             blockIndexes = saveBI;
             blockSizes = saveBS;
@@ -203,7 +202,6 @@ public class CSEFile {
                 write(saveBytes);
                 cursor = Math.min(saveCursor, newSize);
             } catch (ErrorCode e) {
-                e.printStackTrace();
                 System.out.println(e.getErrorText());
                 cursor = saveCursor;
                 blockIndexes = saveBI;
@@ -242,7 +240,6 @@ public class CSEFile {
             }
             return true;
         } catch (ErrorCode e) {
-            e.printStackTrace();
             System.out.println(e.getErrorText());
             // 复原file的meta信息
             blockIndexes = saveBI;
@@ -255,7 +252,10 @@ public class CSEFile {
         // 逐个读出
         byte[][] b = new byte[blockIndexes.size()][];
         for (int i = 0; i < blockIndexes.size(); i++) {
-            b[i] = BlockManager.getLogicBlock(blockIndexes.get(i)).read();
+            Block lb = BlockManager.getLogicBlock(blockIndexes.get(i));
+            if (lb != null) {
+                b[i] = lb.read();
+            }
         }
         // 合并返回
         return Util.concatArray(b);

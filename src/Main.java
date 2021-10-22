@@ -1,4 +1,5 @@
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Main {
@@ -82,13 +83,20 @@ public class Main {
                 case "pos":
                     pos();
                     break;
+                case "move":
+                    move();
+                    break;
                 case "size":
                     fileSize();
                     break;
                 case "fid":
                     fileId();
+                    break;
                 case "write":
                     fileWrite();
+                    break;
+                case "read":
+                    readAll();
                     break;
                 case "set size":
                     fileSetSize();
@@ -101,6 +109,7 @@ public class Main {
                     break;
                 case "quit":
                     safeQuit();
+                    break;
                 default:
                     System.out.println("input 'help' to check commands");
             }
@@ -109,7 +118,9 @@ public class Main {
 
     private static void smartCat() {
         int id = enterInd("fileId");
-        if (id != -1) Tools.smartCat(id);
+        if (id != -1) {
+            System.out.println(Arrays.toString(Tools.smartCat(id)));
+        }
     }
 
     private static void smartCopy() {
@@ -133,30 +144,29 @@ public class Main {
     }
 
     private static void help() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("--命令不区分大小写--\n");
-        sb.append("help").append(":").append("指令集").append("\n");
-        sb.append("cf").append(":").append("改变当前所在FM").append("\n");
-        sb.append("new fm").append(":").append("新建FM").append("\n");
-        sb.append("new bm").append(":").append("新建BM").append("\n");
-        sb.append("smart-ls").append(":").append("数据系统完整信息").append("\n");
-        sb.append("smart-cat").append(":").append("根据文件全局ID读取其全部内容").append("\n");
-        sb.append("smart-copy").append(":").append("根据文件全局ID,在FM下复制一个一样的文件").append("\n");
-        sb.append("smart-hex").append(":").append("根据LogicBlock ID用16进制输出数据内容").append("\n");
-        sb.append("smart-write").append(":").append("给出指针位置和文件全局ID,写入数据").append("\n");
-        sb.append("new file").append(":").append("当前FM下新建文件").append("\n");
-        sb.append("ls").append(":").append("列出当前FM下文件").append("\n");
-        sb.append("ls fm").append(":").append("列出所有FM").append("\n");
-        sb.append("ls bm").append(":").append("列出所有BM").append("\n");
-        sb.append("open").append(":").append("打开当前FM下的文件").append("\n");
-        sb.append("fid").append(":").append("查看打开文件的全局ID").append("\n");
-        sb.append("pos").append(":").append("查看打开文件的指针位置").append("\n");
-        sb.append("size").append(":").append("查看打开文件的大小").append("\n");
-        sb.append("write").append(":").append("向打开文件的指针位置写入").append("\n");
-        sb.append("set size").append(":").append("更改打开文件的大小").append("\n");
-        sb.append("close").append(":").append("关闭文件(buffer方式打开必须关闭,否则修改将无效)").append("\n");
-        sb.append("save").append(":").append("系统数据持久化为文件").append("\n");
-        sb.append("quit").append(":").append("安全退出").append("\n");
+        String sb = "--命令不区分大小写--\n" +
+                "help" + ":" + "指令集" + "\n" +
+                "cf" + ":" + "改变当前所在FM" + "\n" +
+                "new fm" + ":" + "新建FM" + "\n" +
+                "new bm" + ":" + "新建BM" + "\n" +
+                "smart-ls" + ":" + "数据系统完整信息" + "\n" +
+                "smart-cat" + ":" + "根据文件全局ID读取其全部内容" + "\n" +
+                "smart-copy" + ":" + "根据文件全局ID,在FM下复制一个一样的文件" + "\n" +
+                "smart-hex" + ":" + "根据LogicBlock ID用16进制输出数据内容" + "\n" +
+                "smart-write" + ":" + "给出指针位置和文件全局ID,写入数据" + "\n" +
+                "new file" + ":" + "当前FM下新建文件" + "\n" +
+                "ls" + ":" + "列出当前FM下文件" + "\n" +
+                "ls fm" + ":" + "列出所有FM" + "\n" +
+                "ls bm" + ":" + "列出所有BM" + "\n" +
+                "open" + ":" + "打开当前FM下的文件" + "\n" +
+                "fid" + ":" + "查看打开文件的全局ID" + "\n" +
+                "pos" + ":" + "查看打开文件的指针位置" + "\n" +
+                "size" + ":" + "查看打开文件的大小" + "\n" +
+                "write" + ":" + "向打开文件的指针位置写入" + "\n" +
+                "set size" + ":" + "更改打开文件的大小" + "\n" +
+                "close" + ":" + "关闭文件(buffer方式打开必须关闭,否则修改将无效)" + "\n" +
+                "save" + ":" + "系统数据持久化为文件" + "\n" +
+                "quit" + ":" + "安全退出" + "\n";
         System.out.println(sb);
     }
 
@@ -233,7 +243,7 @@ public class Main {
         System.out.println("Enter file name");
         String input = sc.nextLine();
         if (fm.fileNames.containsKey(input)) {
-            String yon = "";
+            String yon;
             do {
                 System.out.println("Open it with buffer or not?(Y:N)");
                 yon = sc.nextLine();
@@ -294,11 +304,32 @@ public class Main {
         }
     }
 
+    private static void readAll() {
+        if (file == null) {
+            System.out.println("No file opened, cannot check file size");
+        } else {
+            System.out.println(new String(file.readAll()));
+        }
+    }
+
     private static void pos() {
         if (file == null) {
             System.out.println("No file opened, cannot pos");
         } else {
             System.out.println(file.getFileName() + ": cursor at " + file.pos() + " in " + file.getSize());
+        }
+    }
+
+    private static void move() {
+        if (file == null) {
+            System.out.println("No file opened, cannot pos");
+        } else {
+            int offset = enterInd("offset");
+            int where = -2;
+            while (where != -1 && where != 0 && where != 1 && where != 2) {
+                where = enterInd("method, 0 for cursor, 1 for head, 2 for tail");
+            }
+            file.move(offset, where);
         }
     }
 

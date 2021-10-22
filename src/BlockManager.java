@@ -276,13 +276,27 @@ public class BlockManager {
                     }
                     logicBlocks.put(lbId, blockInfos);// 重新载入
                 }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+            } catch (FileNotFoundException ignored) {
+
             }
         }
     }
 
     private static void loadLogicBlocks() {
+        // 即便没有logic block 也要载入BM的！
+        File bmF = new File(rootPath);
+        if (bmF.exists()) {
+            File[] fs = bmF.listFiles();
+            if (fs != null) {
+                for (File f : fs) {
+                    int bmId = Integer.parseInt(f.getName());
+                    // 保证BM载入
+                    if (!bms.containsKey(bmId)) {
+                        bms.put(bmId, new BlockManager(bmId));
+                    }
+                }
+            }
+        }
         // 按照logicBlockMap中记载信息逐个读取 并修复
         for (Map.Entry<Integer, List<String>> entry : logicBlocks.entrySet()) {
             // 对某个logic block
