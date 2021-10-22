@@ -96,6 +96,9 @@ public class Main {
                     fileWrite();
                     break;
                 case "read":
+                    read();
+                    break;
+                case "read all":
                     readAll();
                     break;
                 case "set size":
@@ -163,6 +166,8 @@ public class Main {
                 "pos" + ":" + "查看打开文件的指针位置" + "\n" +
                 "size" + ":" + "查看打开文件的大小" + "\n" +
                 "write" + ":" + "向打开文件的指针位置写入" + "\n" +
+                "read " + "查看打开文件从光标起一定长度的内容，以UTF-8字符串输出\n" +
+                "read all" + "查看打开文件的所有内容\n" +
                 "set size" + ":" + "更改打开文件的大小" + "\n" +
                 "close" + ":" + "关闭文件(buffer方式打开必须关闭,否则修改将无效)" + "\n" +
                 "save" + ":" + "系统数据持久化为文件" + "\n" +
@@ -301,6 +306,17 @@ public class Main {
             if (size > -1) {
                 file.setSize(size);
             }
+        }
+    }
+
+    private static void read() {
+        if (file == null) {
+            System.out.println("No file opened, cannot check file size");
+        } else {
+            int length = enterInd("length to read");
+            byte[] read = file.read(length);
+            String s = new String(read);
+            System.out.println(s);
         }
     }
 

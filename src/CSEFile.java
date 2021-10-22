@@ -126,8 +126,9 @@ public class CSEFile {
             length = size - cursor;// 改读余量
         }
         byte[] b = readAll();
-        move(b.length, MOVE_CURR);// 读取后移动光标
-        return Arrays.copyOfRange(b, cursor, cursor + length);
+        byte[] ans = Arrays.copyOfRange(b, cursor, cursor + length);
+        move(length, MOVE_CURR);// 读取后移动光标
+        return ans;
     }
 
     // 写入数据
