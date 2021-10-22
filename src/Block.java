@@ -1,7 +1,3 @@
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
 // 存储block meta信息, 总是根据meta中的路径寻找block data
 public class Block {
     private final BlockManager bm;

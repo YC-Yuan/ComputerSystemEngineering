@@ -2,11 +2,13 @@ import java.util.HashMap;
 
 public class ErrorCode extends RuntimeException {
     // 定义错误码
-    public static final int CURSOR_LESS_THAN_ZERO=1;
-    public static final int CURSOR_GREATER_THAN_SIZE=2;
+    public static final int CURSOR_LESS_THAN_ZERO = 1;
+    public static final int CURSOR_GREATER_THAN_SIZE = 2;
     public static final int FILE_NOT_FOUND = 11;
     public static final int FILE_NAME_REPEATED = 12;
     public static final int FILE_ID_REPEATED = 13;
+    public static final int FILE_WRITE_FAILED = 14;
+    public static final int LOGIC_BLOCK_READ_FAILED = 20;
     public static final int LOGIC_BLOCK_NOT_FOUND = 21;
     public static final int EMPTY_LOGIC_BLOCK = 22;
     public static final int NO_FILE_MANAGER_AVAILABLE = 23;
@@ -14,8 +16,13 @@ public class ErrorCode extends RuntimeException {
     public static final int BLOCK_META_NOT_FOUND = 51;
     public static final int BLOCK_DATA_NOT_FOUND = 52;
     public static final int BLOCK_NOT_FOUND = 53;
+    public static final int CAT_UNRESOLVED_FID = 81;
+    public static final int HEX_UNRESOLVED_BID = 82;
+    public static final int COPY_UNRESOLVED_FID = 83;
+    public static final int WRITE_UNRESOLVED_FID = 84;
     public static final int START_LACK_FM = 91;
     public static final int START_LACK_BM = 92;
+    public static final int UNDEFINED_CURSOR_MOVE_METHOD = 98;
     public static final int CANNOT_RECOVER_BLOCK = 99;
     public static final int CANNOT_GENERATE_MD5 = 100;
     private static final HashMap<Integer, String> ErrorCodeMap = new HashMap<>();
@@ -28,6 +35,8 @@ public class ErrorCode extends RuntimeException {
         ErrorCodeMap.put(FILE_NOT_FOUND, "File not found.");
         ErrorCodeMap.put(FILE_NAME_REPEATED, "File name repeated in one FileManager.");
         ErrorCodeMap.put(FILE_ID_REPEATED, "File id repeated in all FileManagers.");
+        ErrorCodeMap.put(FILE_WRITE_FAILED, "Error happened in writing file.");
+        ErrorCodeMap.put(LOGIC_BLOCK_READ_FAILED, "Error happened in reading logic block.");
         ErrorCodeMap.put(LOGIC_BLOCK_NOT_FOUND, "Logic block not found.");
         ErrorCodeMap.put(EMPTY_LOGIC_BLOCK, "Logic block does not connected to any block.");
         ErrorCodeMap.put(NO_FILE_MANAGER_AVAILABLE, "No any available FM.");
@@ -35,8 +44,13 @@ public class ErrorCode extends RuntimeException {
         ErrorCodeMap.put(BLOCK_META_NOT_FOUND, "Block meta not found.");
         ErrorCodeMap.put(BLOCK_DATA_NOT_FOUND, "Block data not found.");
         ErrorCodeMap.put(BLOCK_NOT_FOUND, "Block in BM not found.");
+        ErrorCodeMap.put(CAT_UNRESOLVED_FID, "File id unresolved in smart-cat.");
+        ErrorCodeMap.put(HEX_UNRESOLVED_BID, "Block id unresolved in smart-hex.");
+        ErrorCodeMap.put(COPY_UNRESOLVED_FID, "File id unresolved in smart-copy.");
+        ErrorCodeMap.put(WRITE_UNRESOLVED_FID, "File id unresolved in smart-write.");
         ErrorCodeMap.put(START_LACK_FM, "Dir 'FMS' not found, cannot recover system.");
         ErrorCodeMap.put(START_LACK_BM, "Dir 'BMS' not found, cannot recover system.");
+        ErrorCodeMap.put(UNDEFINED_CURSOR_MOVE_METHOD, "Undefined cursor move method.");
         ErrorCodeMap.put(CANNOT_RECOVER_BLOCK, "All copies for a logic block damaged, cannot recover it.");
         ErrorCodeMap.put(CANNOT_GENERATE_MD5, "Cannot use MD5.");
     }

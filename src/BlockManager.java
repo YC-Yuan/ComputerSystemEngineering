@@ -8,6 +8,13 @@ public class BlockManager {
     public static final int MAX_SIZE = 512;
     private static final int DUPLICATION_NUM = 3;
     static Map<Integer, BlockManager> bms = new HashMap<>();
+    static int countLogicBlock = 0;
+    // String格式为"int-int",即BM编号中的Block编号
+    static Map<Integer, List<String>> logicBlocks = new HashMap<>();
+
+    public static Map<Integer, List<String>> getLogicBlocks() {
+        return logicBlocks;
+    }
 
     // BM自身信息
     static int countBM = 0;
@@ -20,11 +27,6 @@ public class BlockManager {
         return id;
     }
 
-    // 所有BM公用的逻辑block池
-    static int countLogicBlock = 0;
-    // String格式为"int-int",即BM编号中的Block编号
-    static Map<Integer, List<String>> logicBlocks = new HashMap<>();
-
     // BM独立的物理blocks索引
     int countBlock = 0;
     Map<Integer, Block> blocks = new HashMap<>();
@@ -36,7 +38,7 @@ public class BlockManager {
 
     private BlockManager(int id) {
         this.id = id;
-        countBM = Math.max(countBM, id);
+        countBM = Math.max(countBM, id + 1);
         bms.put(id, this);
     }
 
@@ -60,27 +62,33 @@ public class BlockManager {
     public static Map<Integer, BlockManager> startAll() {
         init();
         loadLogicBlockMap();
-        loadLogicBlocks();
+        loadLogicBlocks();// 自动修复错误block
+        saveAll();// 修复后自动改正文件内容
         return bms;
     }
 
     // FM向logic block申请读取
     public static Block getLogicBlock(int index) {
-        if (!logicBlocks.containsKey(index)) {
-            throw new ErrorCode(ErrorCode.LOGIC_BLOCK_NOT_FOUND);
+        try {
+            if (!logicBlocks.containsKey(index)) {
+                throw new ErrorCode(ErrorCode.LOGIC_BLOCK_NOT_FOUND);
+            }
+            // list中存储了多个物理块信息
+            List<String> sl = logicBlocks.get(index);
+            // 以随机顺序访问直到找到合适块
+            Collections.shuffle(sl);
+            for (String str : sl) {
+                String[] split = str.split("-");
+                int bmId = Integer.parseInt(split[0]);
+                int blockId = Integer.parseInt(split[1]);
+                BlockManager bm = bms.get(bmId);
+                return bm.getBlock(blockId);
+            }
+            throw new ErrorCode(ErrorCode.EMPTY_LOGIC_BLOCK);
+        } catch (ErrorCode errorCode) {
+            System.out.println(errorCode.getErrorText());
+            return null;
         }
-        // list中存储了多个物理块信息
-        List<String> sl = logicBlocks.get(index);
-        // 以随机顺序访问直到找到合适块
-        Collections.shuffle(sl);
-        for (String str : sl) {
-            String[] split = str.split("-");
-            int bmId = Integer.parseInt(split[0]);
-            int blockId = Integer.parseInt(split[1]);
-            BlockManager bm = bms.get(bmId);
-            return bm.getBlock(blockId);
-        }
-        throw new ErrorCode(ErrorCode.EMPTY_LOGIC_BLOCK);
     }
 
     // 申请logic block自动备份
@@ -91,7 +99,12 @@ public class BlockManager {
         // 打乱后访问前几个BM
         Collection<BlockManager> bmc = bms.values();
         if (bmc.size() <= 0) {
-            throw new ErrorCode(ErrorCode.NO_BLOCK_MANAGER_AVAILABLE);
+            try {
+                throw new ErrorCode(ErrorCode.NO_BLOCK_MANAGER_AVAILABLE);
+            } catch (ErrorCode e) {
+                System.out.println(e.getErrorText());
+                return null;
+            }
         }
         List<BlockManager> bml = new ArrayList<>(bmc);
         Collections.shuffle(bml);
@@ -169,7 +182,7 @@ public class BlockManager {
     }
 
     private void indexBlock(Block block) {
-        countBlock = Math.max(countBlock, block.getId());
+        countBlock = Math.max(countBlock, block.getId() + 1);
         blocks.put(block.getId(), block);
     }
 
@@ -255,7 +268,7 @@ public class BlockManager {
                     // 解析第一行：逻辑block编号与备份数量
                     int lbId = sc.nextInt();
                     int pbNum = sc.nextInt();
-                    countLogicBlock = Math.max(countLogicBlock, lbId);
+                    countLogicBlock = Math.max(countLogicBlock, lbId + 1);
                     List<String> blockInfos = new ArrayList<>();
                     for (int i1 = 0; i1 < pbNum; i1++) {
                         // 解析第二行:对每个备份,记录备份位置信息
@@ -277,7 +290,6 @@ public class BlockManager {
             List<String> pbInfos = entry.getValue();
             // 为损坏修复准备的一些变量
             boolean breakdown = false;
-            boolean canRecover = false;
             Block coverBlock = null;
             Stack<String> breakInfos = new Stack<>();
             // 第一遍:载入完好block,记录损坏block
@@ -302,7 +314,7 @@ public class BlockManager {
             // 第二遍:修复损坏block
             if (breakdown) {
                 if (coverBlock == null) {
-                    // 损坏发生且备份不足以修复
+                    // 损坏发生且备份不足以修复 无法启动
                     throw new ErrorCode(ErrorCode.CANNOT_RECOVER_BLOCK);
                 } else {// 执行修复,用完好block数据填充损坏block
                     for (String info1 : breakInfos) {
