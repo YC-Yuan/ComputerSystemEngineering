@@ -59,13 +59,13 @@ public class CSEFile {
         return size;
     }
 
-    CSEFile(FileManager fm, String filename, int fileId) {
+    CSEFile(FileManager fm,String filename,int fileId) {
         this.fm = fm;
         id = fileId;
         name = filename;
     }
 
-    CSEFile(FileManager fm, String filename, int fileId, List<Integer> blockIndexes) {
+    CSEFile(FileManager fm,String filename,int fileId,List<Integer> blockIndexes) {
         this.fm = fm;
         id = fileId;
         name = filename;
@@ -79,7 +79,7 @@ public class CSEFile {
     }
 
     // 更改光标位置
-    public int move(int offset, int where) {
+    public int move(int offset,int where) {
         int target = 0;
         int size = getSize();
         switch (where) {
@@ -107,8 +107,8 @@ public class CSEFile {
             }
         } catch (ErrorCode e) {
             System.out.println(e.getErrorText());
-            target = Math.max(target, 0);
-            target = Math.min(target, size);
+            target = Math.max(target,0);
+            target = Math.min(target,size);
         }
         cursor = target;
         return cursor;
@@ -126,8 +126,8 @@ public class CSEFile {
             length = size - cursor;// 改读余量
         }
         byte[] b = readAll();
-        byte[] ans = Arrays.copyOfRange(b, cursor, cursor + length);
-        move(length, MOVE_CURR);// 读取后移动光标
+        byte[] ans = Arrays.copyOfRange(b,cursor,cursor + length);
+        move(length,MOVE_CURR);// 读取后移动光标
         return ans;
     }
 
@@ -140,8 +140,9 @@ public class CSEFile {
         boolean successFlag = false;
         try {
             if (curBlock == -1) {
-                successFlag = writeNewBlocks(b, 0);
-            } else {
+                successFlag = writeNewBlocks(b,0);
+            }
+            else {
                 // 先读入指针所在block的数据
                 Block lb = BlockManager.getLogicBlock(blockIndexes.get(curBlock));
                 if (lb == null) {
@@ -151,14 +152,14 @@ public class CSEFile {
                 // 在内存中改正内容
                 int preCursor = getPreBytesNum();
                 int preIndex = cursor - preCursor;
-                byte[] preB = Arrays.copyOfRange(originalB, 0, preIndex);
-                byte[] nextB = Arrays.copyOfRange(originalB, preIndex, originalB.length);
-                byte[] newB = Util.concatArray(preB, b, nextB);
+                byte[] preB = Arrays.copyOfRange(originalB,0,preIndex);
+                byte[] nextB = Arrays.copyOfRange(originalB,preIndex,originalB.length);
+                byte[] newB = Util.concatArray(preB,b,nextB);
                 // 删除原本的block
                 blockIndexes.remove(curBlock);
                 blockSizes.remove(curBlock);
                 // 将新数据插入block位置
-                successFlag = writeNewBlocks(newB, curBlock);
+                successFlag = writeNewBlocks(newB,curBlock);
             }
         } catch (ErrorCode e) {
             System.out.println(e.getErrorText());
@@ -166,7 +167,7 @@ public class CSEFile {
             blockSizes = saveBS;
         } finally {
             if (successFlag) {
-                move(b.length, MOVE_CURR);// 写入成功后移动光标
+                move(b.length,MOVE_CURR);// 写入成功后移动光标
             }
         }
         return successFlag;
@@ -179,13 +180,14 @@ public class CSEFile {
             cursor = size;
             write(new byte[newSize - size]);// 自带纠错功能
             cursor = saveCursor;
-        } else {
+        }
+        else {
             List<Integer> saveBI = new ArrayList<>(blockIndexes);
             List<Integer> saveBS = new ArrayList<>(blockIndexes);
             try {
                 // 缩小的情况
                 cursor = newSize;
-                int blockIndex = checkCursorBlock();
+                int blockIndex = checkCursorBlockSetSize();
                 int preBytesNum = getPreBytesNum();
                 int saveNum = newSize - preBytesNum;
                 // 保存最前块中不需要被删除的数据
@@ -194,14 +196,14 @@ public class CSEFile {
                     throw new ErrorCode(ErrorCode.LOGIC_BLOCK_READ_FAILED);
                 }
                 byte[] lbData = lb.read();
-                byte[] saveBytes = Arrays.copyOfRange(lbData, 0, saveNum);
+                byte[] saveBytes = Arrays.copyOfRange(lbData,0,saveNum);
                 // 删除尾块链
-                Util.removeListTail(blockIndexes, blockIndex);
-                Util.removeListTail(blockSizes, blockIndex);
+                Util.removeListTail(blockIndexes,blockIndex);
+                Util.removeListTail(blockSizes,blockIndex);
                 // 重新写入保存数据
                 cursor = newSize - saveNum;
                 write(saveBytes);
-                cursor = Math.min(saveCursor, newSize);
+                cursor = Math.min(saveCursor,newSize);
             } catch (ErrorCode e) {
                 System.out.println(e.getErrorText());
                 cursor = saveCursor;
@@ -217,7 +219,7 @@ public class CSEFile {
     }
 
     // 工具函数 单纯拓展block写入数据
-    protected boolean writeNewBlocks(byte[] b, int index) {
+    protected boolean writeNewBlocks(byte[] b,int index) {
         int blockSize = BlockManager.MAX_SIZE;
         int doneSize = 0;
         int needSize = b.length;
@@ -226,15 +228,15 @@ public class CSEFile {
         List<Integer> saveBS = new ArrayList<>(blockSizes);
         try {
             while (needSize > 0) {
-                int newSize = Math.min(blockSize, needSize);
+                int newSize = Math.min(blockSize,needSize);
                 // 这次申请curSize的block
-                byte[] bToWrite = Arrays.copyOfRange(b, doneSize, doneSize + newSize);
+                byte[] bToWrite = Arrays.copyOfRange(b,doneSize,doneSize + newSize);
                 Block nb = BlockManager.newLogicBlock(bToWrite);
                 if (nb == null) {// 申请失败了!给出反应
                     throw new ErrorCode(ErrorCode.FILE_WRITE_FAILED);
                 }
-                blockIndexes.add(index, nb.getLogicBlockId());
-                blockSizes.add(index, nb.getSize());
+                blockIndexes.add(index,nb.getLogicBlockId());
+                blockSizes.add(index,nb.getSize());
                 index++;
                 doneSize += newSize;
                 needSize -= newSize;
@@ -273,6 +275,19 @@ public class CSEFile {
             curIndex++;
             curCursor += blockSizes.get(curIndex);
         } while (curCursor <= cursor);
+        return curIndex;
+    }
+
+    protected int checkCursorBlockSetSize() {
+        int size = getSize();
+        if (blockIndexes.size() == 0) return -1;
+        if (cursor == 0) return 0;
+        if (cursor == size) return blockIndexes.size() - 1;
+        int curIndex = -1, curCursor = 0;
+        do {
+            curIndex++;
+            curCursor += blockSizes.get(curIndex);
+        } while (curCursor < cursor);
         return curIndex;
     }
 

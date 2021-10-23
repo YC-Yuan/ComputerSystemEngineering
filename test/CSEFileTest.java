@@ -24,10 +24,12 @@ public class CSEFileTest {
         new BlockManager();
         new BlockManager();
         CSEFile file = fm.newFile("test");
-        file.setSize(513);
+        file.setSize(6);
+        System.out.println(Arrays.toString(file.readAll()));
         file.write(new byte[]{1, 2, 3});
         System.out.println(Arrays.toString(file.readAll()));
-        file.setSize(10);
+        Tools.smartLs();
+        file.setSize(3);
         System.out.println(Arrays.toString(file.readAll()));
     }
 }

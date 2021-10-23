@@ -5,7 +5,7 @@ import static java.lang.System.exit;
 
 public class BlockManager {
     // BMs公用
-    public static final int MAX_SIZE = 512;
+    public static final int MAX_SIZE = 2;
     private static final int DUPLICATION_NUM = 3;
     static Map<Integer, BlockManager> bms = new HashMap<>();
     static int countLogicBlock = 0;
