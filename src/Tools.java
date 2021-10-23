@@ -90,6 +90,7 @@ public class Tools {
         for (BlockManager bm : BlockManager.bms.values()) {
             sb.append("BM-").append(bm.getId()).append(" ");
         }
+        sb.append("\n");
         // physical block
         sb.append("-----Block layer, num of Blocks:").append(FileManager.files.size()).append("\n");
         for (BlockManager bm : BlockManager.bms.values()) {
