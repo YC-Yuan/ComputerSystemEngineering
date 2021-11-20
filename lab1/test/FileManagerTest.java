@@ -1,6 +1,5 @@
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.util.Map;
 
 public class FileManagerTest {

@@ -1,8 +1,6 @@
 import java.io.*;
 import java.util.*;
 
-import static java.lang.System.exit;
-
 public class BlockManager {
     // BMs公用
     public static final int MAX_SIZE = 2;
