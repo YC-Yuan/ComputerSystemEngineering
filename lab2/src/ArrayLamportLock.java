@@ -1,12 +1,8 @@
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-
-public class LamportLock implements MyLock {
+public class ArrayLamportLock implements MyLock {
     private final boolean[] choosing;
     private final int[] numbers;
 
-    public LamportLock(int count) {
+    public ArrayLamportLock(int count) {
         choosing = new boolean[count];
         numbers = new int[count];
     }
@@ -14,7 +10,7 @@ public class LamportLock implements MyLock {
     private int getMaxNumber() {
         int ans = 0;
         for (int number : numbers) {
-            ans = Math.max(number, ans);
+            ans = Math.max(number,ans);
         }
         return ans;
     }
@@ -29,13 +25,21 @@ public class LamportLock implements MyLock {
         for (int i = 0; i < choosing.length; i++) {
             if (id != i) {// 考虑所有其他线程
                 while (choosing[i]) {
-//                    System.out.println(id + " waiting for chooser " + i);
+                    try {
+                        Thread.sleep(0,1);// 让出线程 傻子不会自己触发切换
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
                 ;
                 while ((numbers[i] != 0) &&
                         ((numbers[i] < numbers[id]) ||
                                 (numbers[i] == numbers[id]) && i < id)) {
-//                    System.out.println(id + " " + numbers[id] + " waiting for smaller " + i + " " + numbers[i]);
+                    try {
+                        Thread.sleep(0,1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
                 ;
             }

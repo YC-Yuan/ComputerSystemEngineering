@@ -2,7 +2,8 @@ import java.util.concurrent.CountDownLatch;
 
 public class Test {
     public static void main(String[] args) {
-        MyLock lock = new LamportLock(20);
+//        MyLock lock = new ArrayLamportLock(20);
+        MyLock lock = new LinkedLamportLock();
         testA1(lock);
     }
 
