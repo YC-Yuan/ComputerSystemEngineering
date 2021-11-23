@@ -1,9 +1,13 @@
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class Philosopher implements Runnable {
     private final Fork leftFork;
     private final Fork rightFork;
     final String name;
 
-    Philosopher(Fork left,Fork right,String name) {
+    private static AtomicInteger food =new AtomicInteger(10);
+
+    Philosopher(Fork left, Fork right, String name) {
         this.leftFork = left;
         this.rightFork = right;
         this.name = name;
@@ -21,6 +25,10 @@ public class Philosopher implements Runnable {
 
     void eat() throws InterruptedException {
         doAction(System.nanoTime() + ": Eating"); // thinking
+        System.out.println("还剩" + food.addAndGet(-1) + "份食物");
+        if (food.addAndGet(0)==0){
+            System.exit(0);
+        }
     }
 
     void pick_up_left_fork() throws InterruptedException {
@@ -46,8 +54,7 @@ public class Philosopher implements Runnable {
     void pick_up_first_key() throws InterruptedException {
         if (leftFork.getId() < rightFork.getId()) {
             pick_up_left_fork();
-        }
-        else {
+        } else {
             pick_up_right_fork();
         }
     }
@@ -55,8 +62,7 @@ public class Philosopher implements Runnable {
     void pick_up_second_key() throws InterruptedException {
         if (leftFork.getId() > rightFork.getId()) {
             pick_up_left_fork();
-        }
-        else {
+        } else {
             pick_up_right_fork();
         }
     }

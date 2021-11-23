@@ -1,7 +1,7 @@
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class LinkedLamportLock implements MyLock {
+public class MapLamportLock implements MyLock {
     static class ThreadInfo {
         int id;
         int number;

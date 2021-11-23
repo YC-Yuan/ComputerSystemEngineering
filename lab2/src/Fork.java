@@ -1,4 +1,4 @@
-public class Fork extends LinkedLamportLock {
+public class Fork extends MapLamportLock {
     private int id;
 
     Fork(int id) {
