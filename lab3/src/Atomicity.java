@@ -1,23 +1,31 @@
 import java.io.*;
+import java.nio.file.AtomicMoveNotSupportedException;
 
 public class Atomicity {
     public static void main(String[] args) throws InterruptedException {
-        Atomicity atomicity = new Atomicity();
+        File dbFile = new File("db.txt");
+        File logFile = new File("log.txt");
+        Atomicity atomicity = new Atomicity(dbFile, logFile);
         Thread t = atomicity.update('2');
         t.join();
     }
 
-    private static RandomAccessFile db;
-    private static PrintWriter log;
+    // 程序启动后 公用log与db
+    private DBWriter db;
+    private Logger logger;
+    private volatile int lastTid = 0;
+    private int[] marks = new int[10];
 
-    static {
+    private synchronized int getTid() {
+        return lastTid++;
+    }
+
+    public Atomicity(File dbFile, File logFile) {
         try {
-            db = new RandomAccessFile(new File("./db.txt"), "rw");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        try {
-            log = new PrintWriter(new FileWriter(new File("./log.txt"), true));
+            db = new DBWriter(dbFile);
+            logger = new Logger(logFile);
+            // 重启时运行恢复
+            recover();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -26,9 +34,14 @@ public class Atomicity {
     // 开启线程更新文件
     public Thread update(char ch) {
         Thread thread = new Thread(() -> {
+            int tid = getTid();
+            // 先打log
             for (int i = 0; i < 10; i++) {
+                logger.log(tid, i, ch);
                 write(i, ch);
             }
+            // 如果都成功 就commit
+            logger.commit(tid);
         });
         thread.start();
         return thread;
@@ -36,35 +49,10 @@ public class Atomicity {
 
 
     private void write(int index, char ch) {
-        try {
-            // 读出旧值
-            char old = dbRead(index);
-            // log
-            log("line " + index + ", writing " + old + " to " + ch);
-            // 写入新值
-            dbWrite(index, ch);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
-    private void log(String text) {
-        log.println(text);
-        log.flush();
     }
 
     private void recover() {
 
-    }
-
-
-    private char dbRead(int index) throws IOException {
-        db.seek(index * 2L);
-        return (char) db.read();
-    }
-
-    private void dbWrite(int index, char ch) throws IOException {
-        db.seek(index * 2L);
-        db.write((ch + "\n").getBytes());
     }
 }
