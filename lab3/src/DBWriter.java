@@ -6,16 +6,16 @@ import java.io.RandomAccessFile;
 public class DBWriter {
     private final RandomAccessFile db;
 
-    public DBWriter(File file) throws FileNotFoundException {
-        db = new RandomAccessFile(new File("./db.txt"), "rw");
+    public DBWriter(String path) throws FileNotFoundException {
+        db = new RandomAccessFile(new File(path), "rw");
     }
 
-    public char read(int index) throws IOException {
+    public synchronized char read(int index) throws IOException {
         db.seek(index * 2L);
         return (char) db.read();
     }
 
-    public void dbWrite(int index, char ch) throws IOException {
+    public synchronized void write(int index, char ch) throws IOException {
         db.seek(index * 2L);
         db.write((ch + "\n").getBytes());
     }
